@@ -1,0 +1,36 @@
+{
+  "name": "mern-task-manager",
+  "version": "1.0.0",
+  "description": "A MERN application for basic tasks management",
+  "main": "index.js",
+  "scripts": {
+    "dev-server": "npm run dev --prefix backend",
+    "dev-client": "npm start --prefix frontend",
+    "dev": "concurrently \"npm run dev-server\" \"npm run dev-client\"",
+    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend",
+    "heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend",
+    "start": "cd backend && node app.js"
+  },
+  "keywords": [
+    "MERN",
+    "Tasks",
+    "Task manager",
+    "Full stack application"
+  ],
+  "author": "Aayush",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^7.1.0"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "joi": "^17.13.3",
+    "mongoose": "^8.15.0",
+    "twilio": "^5.6.1"
+  }
+}
