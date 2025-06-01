@@ -9,31 +9,72 @@ const Home = () => {
   const { isLoggedIn } = authState;
 
   useEffect(() => {
-    document.title = authState.isLoggedIn ? `${authState.user.name}'s tasks` : "Task Manager";
+    document.title = authState.isLoggedIn ? `${authState.user.name}'s Task Dashboard` : "TaskFlow - Productivity Simplified";
   }, [authState]);
 
   return (
     <MainLayout>
       {!isLoggedIn ? (
-        <div className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-white min-h-screen flex flex-col items-center justify-center p-8">
-          <div className="text-center max-w-4xl space-y-8">
-            <h1 className="text-5xl font-bold leading-tight">Welcome to Task Manager App</h1>
-            <p className="text-2xl">Manage your tasks easily and efficiently.</p>
-            <p className="italic text-xl text-yellow-100">"A task well begun is half done."</p>
-            <div className="pt-8">
-              <Link 
-                to="/signup" 
-                className="inline-block bg-white text-blue-500 hover:bg-blue-100 py-3 px-16 rounded-lg text-xl font-semibold transition-all shadow-md animate__animated animate__fadeIn"
-              >
-                Join now to manage your tasks
-              </Link>
+        <div className="bg-gradient-to-br from-indigo-900 to-blue-800 text-white min-h-screen flex flex-col items-center justify-center p-4">
+          <div className="text-center max-w-4xl space-y-6">
+            <div className="mb-6">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+                Organize. Prioritize. <span className="text-blue-300">Achieve.</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-blue-100">
+                TaskFlow helps you focus on what matters most
+              </p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 max-w-2xl mx-auto">
+              <p className="text-lg italic text-blue-100 mb-4">
+                "Productivity is never an accident. It's always the result of commitment to excellence, intelligent planning, and focused effort."
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <Link 
+                  to="/signup" 
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-8 rounded-lg text-lg font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  Get Started - It's Free
+                </Link>
+                <Link 
+                  to="/login" 
+                  className="border-2 border-blue-400 text-blue-100 hover:bg-white/10 py-3 px-8 rounded-lg text-lg font-medium transition-all"
+                >
+                  Already have an account?
+                </Link>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10 text-left">
+              <div className="bg-white/5 p-5 rounded-xl">
+                <h3 className="text-xl font-semibold mb-2">📝 Smart Task Management</h3>
+                <p className="text-blue-100">Create, organize, and track tasks with ease.</p>
+              </div>
+              <div className="bg-white/5 p-5 rounded-xl">
+                <h3 className="text-xl font-semibold mb-2">⏱️ Time Optimization</h3>
+                <p className="text-blue-100">Focus on priorities with our smart scheduling.</p>
+              </div>
+              <div className="bg-white/5 p-5 rounded-xl">
+                <h3 className="text-xl font-semibold mb-2">📈 Progress Tracking</h3>
+                <p className="text-blue-100">Visualize your productivity and accomplishments.</p>
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="py-8 px-4 sm:px-8">
-          <h1 className="text-3xl mb-8 font-semibold text-center text-gray-800">Welcome, {authState.user.name}!</h1>
-          <Tasks />
+        <div className="py-8 px-4 sm:px-8 max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">
+              Your Task Dashboard
+            </h1>
+            <span className="text-blue-600 font-medium">
+              Welcome back, {authState.user.name}!
+            </span>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <Tasks />
+          </div>
         </div>
       )}
     </MainLayout>

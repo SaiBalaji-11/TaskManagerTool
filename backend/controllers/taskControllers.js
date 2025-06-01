@@ -59,9 +59,9 @@ exports.findTeamTaskByTaskId = async (req, res) => {
       return res.status(400).json({ status: false, msg: 'Task ID is required' });
     }
 
+    // ✅ No filtering by createdBy — allow anyone to fetch with taskId
     const task = await TeamTask.findOne({
-      taskId: taskId.toUpperCase(),
-      createdBy: req.user.id
+      taskId: taskId.toUpperCase()
     });
 
     if (!task) {
@@ -74,6 +74,7 @@ exports.findTeamTaskByTaskId = async (req, res) => {
     return res.status(500).json({ status: false, msg: 'Internal Server Error' });
   }
 };
+
 
 exports.postTask = async (req, res) => {
   try {
@@ -137,42 +138,35 @@ exports.putTask = async (req, res) => {
     const taskIdParam = req.params.taskId;
     const updatedTaskData = req.body;
 
-
-    // Input validation: Check if the task ID is provided
     if (!taskIdParam) {
       return res.status(400).json({ status: false, msg: 'Task ID is required' });
     }
 
-    // Check if updatedTaskData is empty
     if (!updatedTaskData || Object.keys(updatedTaskData).length === 0) {
       return res.status(400).json({ status: false, msg: 'Request body cannot be empty' });
     }
 
-    // First check if it's a valid ObjectId
     const isObjectId = mongoose.Types.ObjectId.isValid(taskIdParam);
 
-    // Try to find the task (either TeamTask or regular Task)
     let taskToUpdate;
-    
+
+    // ✅ Removed "createdBy" check so any user can access if they have correct ID
     if (isObjectId) {
-      // Case 1: Searching by _id (MongoDB ObjectId)
-      taskToUpdate = await TeamTask.findOne({ _id: taskIdParam, createdBy: req.user.id }) || 
-                    await Task.findOne({ _id: taskIdParam, user: req.user.id });
+      taskToUpdate = await TeamTask.findOne({ _id: taskIdParam }) || 
+                     await Task.findOne({ _id: taskIdParam });
     } else {
-      // Case 2: Searching by taskId (string identifier)
-      taskToUpdate = await TeamTask.findOne({ taskId: taskIdParam, createdBy: req.user.id }) || 
-                    await Task.findOne({ taskId: taskIdParam, user: req.user.id });
+      taskToUpdate = await TeamTask.findOne({ taskId: taskIdParam }) || 
+                     await Task.findOne({ taskId: taskIdParam });
     }
 
     if (!taskToUpdate) {
-      return res.status(404).json({ status: false, msg: 'Task not found or unauthorized' });
+      return res.status(404).json({ status: false, msg: 'Task not found' });
     }
 
-    // Handle TeamTask update
+    // Check if it's a TeamTask
     if (taskToUpdate instanceof mongoose.model('TeamTask')) {
       const { title, description, startDate, endDate, time, members, progress } = updatedTaskData;
 
-      // Validate required fields for TeamTask update
       if (title === undefined || description === undefined || startDate === undefined || 
           endDate === undefined || time === undefined || members === undefined || progress === undefined) {
         return res.status(400).json({ 
@@ -186,17 +180,9 @@ exports.putTask = async (req, res) => {
       }
 
       try {
-        const updatedTeamTask = await TeamTask.findOneAndUpdate(
-          { _id: taskToUpdate._id }, // Use the found document's _id
-          {
-            title,
-            description,
-            startDate,
-            endDate,
-            time,
-            members,
-            progress,
-          },
+        const updatedTeamTask = await TeamTask.findByIdAndUpdate(
+          taskToUpdate._id,
+          { title, description, startDate, endDate, time, members, progress },
           { new: true, runValidators: true }
         );
 
@@ -212,12 +198,10 @@ exports.putTask = async (req, res) => {
         console.error("Error updating TeamTask:", error);
         return res.status(500).json({ status: false, msg: 'Internal server error' });
       }
-    } 
-    // Handle regular Task update
-    else {
+    } else {
+      // Handle regular Task
       const { title, endDate, endTime } = updatedTaskData;
-      
-      // Validate required fields
+
       if (title === undefined || endDate === undefined || endTime === undefined) {
         return res.status(400).json({ 
           status: false, 
@@ -231,7 +215,7 @@ exports.putTask = async (req, res) => {
           { title, endDate, endTime },
           { new: true, runValidators: true }
         );
-        
+
         return res.status(200).json({ 
           task: updatedTask, 
           status: true, 
@@ -250,6 +234,7 @@ exports.putTask = async (req, res) => {
     return res.status(500).json({ status: false, msg: 'Internal Server Error' });
   }
 };
+
 
 
 

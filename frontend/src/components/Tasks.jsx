@@ -103,7 +103,8 @@ const renderReminder = (task) => {
   );
 };
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
       {/* Header */}
   <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row justify-between items-start sm:items-center mb-8">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Tasks</h1>

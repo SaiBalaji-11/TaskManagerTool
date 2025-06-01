@@ -28,15 +28,17 @@ const TaskTeam = () => {
   const [searchTaskId, setSearchTaskId] = useState('');
   const [searchError, setSearchError] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
-  const [currentTaskId, setCurrentTaskId] = useState(''); // Stores MongoDB _id
+  const [currentTaskId, setCurrentTaskId] = useState('');
+  const [membersReadOnly, setMembersReadOnly] = useState(false); // New state for members read-only mode
 
   useEffect(() => {
-    document.title = mode === 'add' ? 'Add Task' : 'Update Task';
+    document.title = mode === 'add' ? 'Add TeamTask' : 'Update TeamTask';
   }, [mode]);
 
   useEffect(() => {
     if (mode === 'update' && taskId) {
       loadTaskData(taskId);
+      setMembersReadOnly(true); // Set members to read-only when loading existing task
     }
   }, [mode, taskId]);
 
@@ -48,7 +50,7 @@ const TaskTeam = () => {
     };
     fetchData(config, { showSuccessToast: false }).then((data) => {
       if (data.task) {
-        setCurrentTaskId(data.task._id); // Store MongoDB _id
+        setCurrentTaskId(data.task._id);
         setFormData({
           taskId: data.task.taskId || '',
           title: data.task.title,
@@ -85,8 +87,9 @@ const TaskTeam = () => {
       const data = await fetchData(config, { showSuccessToast: false });
       if (data && data.task) {
         const foundTask = data.task;
-        setCurrentTaskId(foundTask._id); // Store MongoDB _id
+        setCurrentTaskId(foundTask._id);
         setMode('update');
+        setMembersReadOnly(true); // Set members to read-only when task is found
         setFormData({
           taskId: foundTask.taskId || '',
           title: foundTask.title,
@@ -94,7 +97,7 @@ const TaskTeam = () => {
           startDate: foundTask.startDate.split('T')[0],
           endDate: foundTask.endDate.split('T')[0],
           time: foundTask.time || '',
-          members: foundTask.members || [], // Keep existing members data
+          members: foundTask.members || [],
           progress: foundTask.progress || 0
         });
         setSearchError('');
@@ -124,6 +127,7 @@ const TaskTeam = () => {
     });
     setCurrentTaskId('');
     setMode('add');
+    setMembersReadOnly(false); // Reset members read-only when form is reset
   };
 
   const handleChange = (e) => {
@@ -135,6 +139,7 @@ const TaskTeam = () => {
 
   const handleAddMember = (e) => {
     if (e) e.preventDefault();
+    if (membersReadOnly) return; // Prevent adding members in read-only mode
     if (!newMemberName.trim()) return;
 
     const exists = formData.members.some(
@@ -204,6 +209,7 @@ const TaskTeam = () => {
   };
 
   const handleRemoveMember = (index) => {
+    if (membersReadOnly) return; // Prevent removing members in read-only mode
     const updatedMembers = formData.members.filter((_, i) => i !== index);
     const totalProgress = updatedMembers.reduce((sum, member) => sum + member.totalProgress, 0);
     const averageProgress = updatedMembers.length > 0 
@@ -253,7 +259,7 @@ const TaskTeam = () => {
               onChange={(e) => setSearchTaskId(e.target.value)}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none
                          focus:ring-2 focus:ring-blue-400 transition"
-              placeholder="Enter Task ID (e.g., QWERTY)"
+              placeholder="Enter Task ID"
             />
             <button
               type="submit"
@@ -344,7 +350,7 @@ const TaskTeam = () => {
                   onChange={handleChange}
                   className="px-4 py-3 border border-gray-300 rounded-md focus:outline-none
                              focus:ring-2 focus:ring-blue-400 transition min-h-[120px]"
-                  placeholder="Enter task description"
+                  placeholder="Mention the names and Roles of Team members"
                 />
               </div>
 
@@ -409,17 +415,19 @@ const TaskTeam = () => {
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-semibold text-gray-800">Team Members</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddMemberForm(true)}
-                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
-                  >
-                    <span>+ Add Member</span>
-                  </button>
+                  {!membersReadOnly && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddMemberForm(true)}
+                      className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
+                    >
+                      <span>+ Add Member</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Add Member Form */}
-                {showAddMemberForm && (
+                {showAddMemberForm && !membersReadOnly && (
                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex gap-2">
                       <input
@@ -470,13 +478,15 @@ const TaskTeam = () => {
                             className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none
                                        focus:ring-2 focus:ring-blue-400 transition"
                           />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveMember(index)}
-                            className="text-red-500 hover:text-red-700 px-3 py-2"
-                          >
-                            Remove
-                          </button>
+                          {!membersReadOnly && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMember(index)}
+                              className="text-red-500 hover:text-red-700 px-3 py-2"
+                            >
+                              Remove
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -540,14 +550,13 @@ const TaskTeam = () => {
                   </>
                 )}
                 <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="bg-red-500 text-white px-6 py-3 rounded-md font-semibold
-                           hover:bg-red-600 transition"
-              >
-                Cancel
-              </button>
-
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="bg-red-500 text-white px-6 py-3 rounded-md font-semibold
+                             hover:bg-red-600 transition"
+                >
+                  Cancel
+                </button>
               </div>
             </>
           )}
@@ -558,3 +567,5 @@ const TaskTeam = () => {
 };
 
 export default TaskTeam;
+
+

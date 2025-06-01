@@ -24,7 +24,7 @@ const Task = () => {
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
-    document.title = mode === 'add' ? 'Add task' : 'Update Task';
+    document.title = mode === 'add' ? 'Add Task' : 'Update Task';
   }, [mode]);
 
   // Helper: convert 24-hour time to 12-hour with meridian
