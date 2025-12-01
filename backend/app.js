@@ -11,6 +11,8 @@ const authMiddleware = require('./middlewares.js');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+// const chatRoutes = require('./routes/chatRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -32,6 +34,7 @@ mongoose.connect(mongoUrl, {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {

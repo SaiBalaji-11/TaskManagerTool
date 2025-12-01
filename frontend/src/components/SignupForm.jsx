@@ -62,7 +62,7 @@ const SignupForm = () => {
           <h2 className='text-center mb-6 text-3xl font-bold text-gray-800'>Create Your Account</h2>
 
           <div className='mb-6'>
-            <label htmlFor='name' className='block text-lg mb-2 font-semibold text-gray-700'>Name</label>
+            <label htmlFor='name' className='block text-lg mb-2 font-semibold text-gray-700'>FullName(With Surname)</label>
             <Input
               type='text'
               name='name'
