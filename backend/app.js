@@ -28,7 +28,6 @@ mongoose.connect(mongoUrl, {
   process.exit(1); // Stop server if DB connection fails
 });
 
-
 // Define routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);

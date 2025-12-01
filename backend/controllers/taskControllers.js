@@ -236,6 +236,185 @@ exports.putTask = async (req, res) => {
 };
 
 
+//modification part
+// saibalaji-11/taskmanagertool/TaskManagerTool-e7ea819678c577921747c30e4d013d404526b8e5/backend/controllers/taskControllers.js
+
+// ... existing imports
+
+// ... existing getTasks, getTask, findTeamTaskByTaskId, postTask
+
+exports.putTask = async (req, res) => {
+  try {
+    const taskIdParam = req.params.taskId;
+    const updatedTaskData = req.body;
+    const userId = req.user.id; // Logged in user ID
+
+    if (!taskIdParam) {
+      return res.status(400).json({ status: false, msg: 'Task ID is required' });
+    }
+
+    if (!updatedTaskData || Object.keys(updatedTaskData).length === 0) {
+      return res.status(400).json({ status: false, msg: 'Request body cannot be empty' });
+    }
+
+    const isObjectId = mongoose.Types.ObjectId.isValid(taskIdParam);
+
+    let taskToUpdate;
+
+    // Fetch the task by _id or custom taskId
+    if (isObjectId) {
+      taskToUpdate = await TeamTask.findOne({ _id: taskIdParam }) || 
+                     await Task.findOne({ _id: taskIdParam });
+    } else {
+      taskToUpdate = await TeamTask.findOne({ taskId: taskIdParam }) || 
+                     await Task.findOne({ taskId: taskIdParam });
+    }
+
+    if (!taskToUpdate) {
+      return res.status(404).json({ status: false, msg: 'Task not found' });
+    }
+
+    // Check if it's a TeamTask
+    if (taskToUpdate instanceof mongoose.model('TeamTask')) {
+      const { title, description, startDate, endDate, time, members, progress } = updatedTaskData;
+      
+      const isCreator = taskToUpdate.createdBy.toString() === userId.toString(); // Check if logged-in user is the creator
+
+      if (!isCreator) {
+        // --- START: NON-CREATOR RESTRICTION LOGIC ---
+        const loggedInUserName = req.user.name; // Assuming req.user has the 'name' field
+        
+        if (!loggedInUserName) {
+          return res.status(500).json({ status: false, msg: 'Logged in user name not available on request' });
+        }
+        
+        const originalMembers = taskToUpdate.members;
+
+        // 1. Validate: Only the creator can modify task details (non-member fields)
+        const teamTaskDetailsFields = ['title', 'description', 'startDate', 'endDate', 'time', 'taskId'];
+        const taskDetailsChanged = teamTaskDetailsFields.some(field => 
+          updatedTaskData[field] !== undefined && 
+          updatedTaskData[field] !== taskToUpdate[field]
+        );
+
+        if (taskDetailsChanged) {
+          return res.status(403).json({ status: false, msg: 'Only the task creator can update task details (title, dates, etc.).' });
+        }
+        
+        // 2. Validate: Member array length must be the same (no add/remove)
+        if (!members || members.length !== originalMembers.length) {
+          return res.status(403).json({ status: false, msg: 'Only the task creator can add or remove members.' });
+        }
+
+        // 3. Validate: Only the current user's progress can change.
+        const canUpdate = members.every((updatedMember, index) => {
+          const originalMember = originalMembers[index];
+          
+          if (!originalMember || updatedMember.name !== originalMember.name) {
+             // Member structure changed (or name changed), disallow.
+             return false;
+          }
+          
+          // Check if this is the logged-in user's entry
+          if (updatedMember.name.toLowerCase() === loggedInUserName.toLowerCase()) {
+            // Logged-in user's entry: allow totalProgress and currentProgress change, but name must be the same
+            return true; 
+          } else {
+            // Other members' entries: prevent any change to their progress fields
+            const progressFieldsChanged = updatedMember.totalProgress !== originalMember.totalProgress ||
+                                          updatedMember.currentProgress !== originalMember.currentProgress;
+            
+            return !progressFieldsChanged;
+          }
+        });
+        
+        if (!canUpdate) {
+            return res.status(403).json({ status: false, msg: 'You can only update your own progress.' });
+        }
+        
+        // --- END: NON-CREATOR RESTRICTION LOGIC ---
+      }
+      
+      // Continue with the update for both creator (unrestricted) and member (after passing checks)
+
+      if (title === undefined || description === undefined || startDate === undefined || 
+          endDate === undefined || time === undefined || members === undefined || progress === undefined) {
+        return res.status(400).json({ 
+          status: false, 
+          msg: 'All fields (title, description, startDate, endDate, time, members, progress) are required for team task update' 
+        });
+      }
+
+      if (!Array.isArray(members)) {
+        return res.status(400).json({ status: false, msg: 'Members must be an array' });
+      }
+
+      try {
+        const updatedTeamTask = await TeamTask.findByIdAndUpdate(
+          taskToUpdate._id,
+          { title, description, startDate, endDate, time, members, progress },
+          { new: true, runValidators: true }
+        );
+
+        return res.status(200).json({ 
+          task: updatedTeamTask, 
+          status: true, 
+          msg: 'Team task updated successfully' 
+        });
+      } catch (error) {
+        if (error.name === 'ValidationError') {
+          return res.status(400).json({ status: false, msg: 'Validation error: ' + error.message });
+        }
+        console.error("Error updating TeamTask:", error);
+        return res.status(500).json({ status: false, msg: 'Internal server error' });
+      }
+    } else {
+      // Handle regular Task
+      
+      // ADDED: Check if the personal task belongs to the user
+      if (taskToUpdate.user.toString() !== userId.toString()) {
+          return res.status(403).json({ status: false, msg: 'You do not have permission to update this personal task.' });
+      }
+
+      const { title, endDate, endTime } = updatedTaskData;
+
+      if (title === undefined || endDate === undefined || endTime === undefined) {
+        return res.status(400).json({ 
+          status: false, 
+          msg: 'Title, end date, and end time are required for simple task update' 
+        });
+      }
+
+      try {
+        const updatedTask = await Task.findByIdAndUpdate(
+          taskToUpdate._id,
+          { title, endDate, endTime },
+          { new: true, runValidators: true }
+        );
+
+        return res.status(200).json({ 
+          task: updatedTask, 
+          status: true, 
+          msg: 'Task updated successfully' 
+        });
+      } catch (error) {
+        if (error.name === 'ValidationError') {
+          return res.status(400).json({ status: false, msg: 'Validation error: ' + error.message });
+        }
+        console.error("Error updating Task:", error);
+        return res.status(500).json({ status: false, msg: 'Internal server error' });
+      }
+    }
+  } catch (err) {
+    console.error('Error in putTask:', err);
+    return res.status(500).json({ status: false, msg: 'Internal Server Error' });
+  }
+};
+
+
+// ... existing deleteTask
+
+
 
 
 exports.deleteTask = async (req, res) => {
