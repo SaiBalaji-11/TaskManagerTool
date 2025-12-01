@@ -44,7 +44,7 @@ exports.handleChat = async (req, res) => {
 
     const teamContext = teamTasks.length > 0
       ? teamTasks.map((t, i) => {
-          const status = t.isCompleted ? "Completed" : "In Progress";
+          const status = t.isCompleted ? "Completed" : "Pending";
           const title = t.title || "Untitled Team Task";
           const date = t.endDate ? new Date(t.endDate).toDateString() : "No date";
           return `${i + 1}. [Team] ${title} (Due: ${date}, Status: ${status})`;

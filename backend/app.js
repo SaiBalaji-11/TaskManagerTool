@@ -19,6 +19,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use(cors({
+  origin: ['https://tasksphere-three.vercel.app'], // <-- replace
+  credentials: true, // allow cookies / auth tokens
+}));
 
 // Connect to MongoDB
 const mongoUrl = process.env.MONGODB_URL || process.env.MONGO_URI;
