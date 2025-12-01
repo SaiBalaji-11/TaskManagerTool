@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
+import api from '../api'; // <-- NEW IMPORT: Use the configured axios instance
 
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,23 +23,22 @@ const Chatbot = () => {
     setInput("");
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      // --- FIX APPLIED HERE: Using api.post instead of fetch ---
+      const response = await api.post('/chat', { message: currentInput }, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authState.token
-        },
-        body: JSON.stringify({ message: currentInput })
+          'Authorization': authState.token // Pass the token in the Authorization header
+        }
       });
       
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Error");
-
-      const botMessage = { sender: "bot", text: data.reply };
+      // Axios automatically parses JSON, and response.data contains the server reply
+      const botMessage = { sender: "bot", text: response.data.reply };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Chat Error:", error);
-      setMessages((prev) => [...prev, { sender: "bot", text: "Sorry, I am having trouble connecting." }]);
+      
+      // Axios error handling: use error.response?.data?.message for server-side error messages
+      const errorMessage = error.response?.data?.message || "Sorry, I am having trouble connecting.";
+      setMessages((prev) => [...prev, { sender: "bot", text: errorMessage }]);
     }
     setLoading(false);
   };
